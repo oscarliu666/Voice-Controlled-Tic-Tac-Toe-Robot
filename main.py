@@ -11,7 +11,8 @@ from so101_mujoco_utils import set_initial_pose, hold_position
 from game import check_board, print_board
 from cube_config import INITIAL_ARM_CONFIG, CELL_MAPPING
 from cube_manager import CubeManager
-from robot_control import pick_and_place_cube, reset_all_cubes
+from robot_control import pick_and_place_cube, reset_all_cubes,robot_clap
+from audio import listen_for_move
 
 
 def main():
@@ -27,6 +28,7 @@ def main():
     # 启动 viewer
     with mujoco.viewer.launch_passive(m, d) as viewer:
         print("MuJoCo Tic-Tac-Toe with SO-101 启动中...")
+        robot_clap(m,d,viewer)
         
         # 初始化棋子管理器
         cube_manager = CubeManager()
@@ -57,11 +59,15 @@ def main():
             # 单局游戏循环
             while not ended and viewer.is_running():
                 # ========== 玩家回合 (O) ==========
-                player_move = input("Pick a location: ")
+                # player_move = input("Pick a location: ")
+                print("Please pick a location")
+                player_move = listen_for_move()
                 
                 while player_move not in location:
                     print("Invalid move")
-                    player_move = input("Pick a location: ")
+                    print("Please pick a location")
+                    player_move = listen_for_move()
+                    # player_move = input("Pick a location: ")
                 
                 player_marks.append(player_move)
                 location.remove(player_move)
@@ -80,6 +86,7 @@ def main():
                 ended, winner, is_draw = check_board(board)
                 if ended and not is_draw:
                     print("Player won! Starting next game...")
+                    robot_clap(m,d,viewer) 
                 elif is_draw:
                     print("It's a draw! Starting next game...")
                 

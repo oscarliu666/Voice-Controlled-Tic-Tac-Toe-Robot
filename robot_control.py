@@ -11,6 +11,7 @@ from so101_mujoco_utils import (
     hold_position,
     convert_to_dictionary,
     send_position_command,
+    convert_to_list
 )
 from so101_inverse_kinematics import get_inverse_kinematics
 
@@ -223,3 +224,44 @@ def reset_all_cubes(m, d, viewer, cube_manager):
     current_dict = convert_to_dictionary(d.qpos)
     move_to_pose_cubic(m, d, viewer, current_dict, INITIAL_ARM_CONFIG, 2.0)
     hold_position(m, d, viewer, 0.5)
+
+import time
+
+def robot_clap(m,d,viewer):
+
+    current_pos = d.qpos.copy()
+    current_pos = convert_to_dictionary(current_pos)
+    move_duration = 2.0
+
+    # ---- 姿态 #2: 抬手姿态（准备鼓掌）----
+    raise_pose = {
+        'shoulder_pan':   0.0,
+        'shoulder_lift':   -30.0,   # 抬高
+        'elbow_flex':     -50.0,   # 展开手肘
+        'wrist_flex':      0.0,
+        'wrist_roll':       0.0,
+        'gripper':          70.0
+    }
+    raise_pose_2 = {
+        'shoulder_pan':   0.0,
+        'shoulder_lift':   -30.0,   # 抬高
+        'elbow_flex':     -50.0,   # 展开手肘
+        'wrist_flex':      0.0,
+        'wrist_roll':       0.0,
+        'gripper':          20.0
+    }
+
+    print("🤖 Robot is celebrating the player win!")
+
+    # 抬手
+    move_to_pose_cubic(m,d,viewer,current_pos, raise_pose,move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose, raise_pose_2, move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose_2, raise_pose, move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose, raise_pose_2, move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose_2, raise_pose, move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose, raise_pose_2, move_duration)
+    move_to_pose_cubic(m,d,viewer,raise_pose_2, current_pos, move_duration)
+
+    time.sleep(0.5)
+
+    print("👏 Robot clap finished!")
