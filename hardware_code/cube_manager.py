@@ -30,7 +30,7 @@ class CubeManager:
         def add_pile(piece_type, pile_name, x, y, count):
             nonlocal geom_id
             for level in range(count):
-                z = PILE_BASE_Z + level * BLOCK_HEIGHT
+                z = PILE_BASE_Z+ level * BLOCK_HEIGHT
                 pos = np.array([x, y, z], dtype=float)
 
                 cube = {

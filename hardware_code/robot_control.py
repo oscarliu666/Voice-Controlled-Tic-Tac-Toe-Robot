@@ -6,12 +6,9 @@
 import numpy as np
 import mujoco
 
-from so101_mujoco_utils import (
+from so101_utils import (
     move_to_pose_cubic,
     hold_position,
-    convert_to_dictionary,
-    send_position_command,
-    convert_to_list
 )
 from so101_inverse_kinematics import get_inverse_kinematics
 
@@ -35,29 +32,34 @@ def get_gripper_orientation():
 
 def move_gripper_only(bus, target_angle, duration=0.5):
     """
-    只控制 gripper，从当前角度平滑插值到 target_angle，
-    其余关节保持调用时的姿态不变
+    真实夹爪控制：只控制 gripper，其他关节不动
     """
-    start_time = d.time
-    start_dict = convert_to_dictionary(d.qpos)
-    start_angle = start_dict["gripper"]
+    start_t = time.time()
+
+    # 读取当前 gripper 角度（Feetech）
+    all_pos = bus.sync_read("Present_Position")
+    start_angle = all_pos[-1]   # gripper 位置 = 最后一个 motor 的 present position
 
     while True:
-        t = d.time - start_time
-        if t > duration:
+        t = time.time() - start_t
+        if t >= duration:
             break
 
         alpha = min(t / duration, 1.0)
-        cmd = dict(start_dict)
-        cmd["gripper"] = (1.0 - alpha) * start_angle + alpha * target_angle
+        current = (1 - alpha) * start_angle + alpha * target_angle
 
-        send_position_command(d, cmd)
+        bus.set_gripper(current)
+        time.sleep(0.01)
+
+    # 最终锁定到目标角度
+    bus.set_gripper(target_angle)
+
 
 
 
 def pick_and_place_cube(
     bus, cube_manager, cube, cell_name,
-    hover_height=0.05, move_duration=1.0
+    hover_height=0.05, move_duration=2.0
 ):
     """
     用 SO-101 把指定 cube 从堆叠位置拿起来，放到棋盘格子
@@ -77,37 +79,41 @@ def pick_and_place_cube(
     board_pos_above = board_pos.copy()
     board_pos_above[2] += hover_height
 
-    current_dict = convert_to_dictionary(d.qpos)
+    current_pos = bus.sync_read("Present_Position")
 
     # 1. 去堆叠上方（张开）
     config_stack_above = get_inverse_kinematics(stack_pos_above, np.eye(3))
     config_stack_above["gripper"] = OPEN_GRIPPER
-    move_to_pose_cubic(bus, current_dict, config_stack_above, move_duration)
+    move_to_pose_cubic(bus, current_pos, config_stack_above, move_duration)
 
     # 2. 下到方块中心（保持张开）
     config_stack_down = get_inverse_kinematics(stack_pos, np.eye(3))
     config_stack_down["gripper"] = OPEN_GRIPPER
-    move_to_pose_cubic(bus, config_stack_above, config_stack_down, move_duration / 2.0)
+    move_to_pose_cubic(bus, config_stack_above, config_stack_down, move_duration )
 
-    # 3. 闭合夹爪
-    move_gripper_only(bus, CLOSED_GRIPPER, 0.6)
+    # # 3. 闭合夹爪
+    # move_gripper_only(bus, CLOSED_GRIPPER, 0.6)
+    block_configuration_closed = config_stack_down.copy()
+    block_configuration_closed['gripper'] = 5
+    move_to_pose_cubic(bus, config_stack_down, block_configuration_closed, 1.0)
 
     # 4. 提回堆叠上方（保持闭合）
-    stack_above_closed = convert_to_dictionary(d.qpos)
-    move_to_pose_cubic(bus, stack_above_closed, stack_above_closed, move_duration / 4.0)
+    config_stack_above["gripper"]=5
+    move_to_pose_cubic(bus, block_configuration_closed, config_stack_above, move_duration)
 
     # 5. 堆叠上方 → 棋盘上方（闭合）
     config_board_above = get_inverse_kinematics(board_pos_above, np.eye(3))
     config_board_above["gripper"] = CLOSED_GRIPPER
-    move_to_pose_cubic(bus, stack_above_closed, config_board_above, move_duration)
+    move_to_pose_cubic(bus, config_stack_above, config_board_above, move_duration)
 
     # 6. 下到棋盘格子（闭合）
     config_board_down = get_inverse_kinematics(board_pos, np.eye(3))
     config_board_down["gripper"] = CLOSED_GRIPPER
-    move_to_pose_cubic(bus, config_board_above, config_board_down, move_duration / 2.0)
+    move_to_pose_cubic(bus, config_board_above, config_board_down, move_duration )
 
-    # 7. 张开夹爪（放下）
-    move_gripper_only(bus, OPEN_GRIPPER, 0.4)
+    config_board_open = config_board_down
+    config_board_open["gripper"] = OPEN_GRIPPER
+    move_to_pose_cubic(bus, config_board_down, config_board_open, move_duration)
 
     # 更新棋子位置和状态
     cube_manager.move_cube_to(cube, board_pos)
@@ -116,15 +122,15 @@ def pick_and_place_cube(
     # 8. 抬回棋盘上方
     config_board_above_open = get_inverse_kinematics(board_pos_above, np.eye(3))
     config_board_above_open["gripper"] = OPEN_GRIPPER
-    move_to_pose_cubic(bus, convert_to_dictionary(d.qpos), 
-                      config_board_above_open, move_duration / 2.0)
+    move_to_pose_cubic(bus,config_board_open, 
+                      config_board_above_open, move_duration)
 
     hold_position(bus, 0.2)
 
 
 def return_cube_to_pile(
     bus, cube_manager, cube, target_pos,
-    hover_height=0.05, move_duration=1.0
+    hover_height=0.05, move_duration=2.0
 ):
     """
     把已经在棋盘上的 cube 再次 pick & place 回某个堆叠位置
@@ -138,7 +144,7 @@ def return_cube_to_pile(
     pile_pos_above = pile_pos.copy()
     pile_pos_above[2] += hover_height
 
-    current_dict = convert_to_dictionary(d.qpos)
+    current_dict = bus.sync_read("Present_Position")
 
     # 1. 去棋盘上方（张开）
     config_board_above = get_inverse_kinematics(board_pos_above, np.eye(3))
@@ -148,15 +154,19 @@ def return_cube_to_pile(
     # 2. 下到棋盘方块中心（张开）
     config_board_down = get_inverse_kinematics(board_pos, np.eye(3))
     config_board_down["gripper"] = OPEN_GRIPPER
-    move_to_pose_cubic(bus, config_board_above, config_board_down, move_duration / 2.0)
+    move_to_pose_cubic(bus, config_board_above, config_board_down, move_duration)
 
     # 3. 闭合夹爪
-    move_gripper_only(bus, CLOSED_GRIPPER, 0.4)
+    config_board_down_closed = config_board_down
+    config_board_down_closed["gripper"] = CLOSED_GRIPPER
+    move_to_pose_cubic(bus, config_board_down, config_board_down_closed, move_duration)
+
     cube_manager.hide_cube(cube)
 
     # 4. 提回棋盘上方（保持闭合）
-    board_above_closed = convert_to_dictionary(d.qpos)
-    move_to_pose_cubic(bus, board_above_closed, board_above_closed, move_duration / 2.0)
+    board_above_closed = config_board_above
+    board_above_closed["gripper"] = CLOSED_GRIPPER
+    move_to_pose_cubic(bus, config_board_down_closed, board_above_closed, move_duration )
 
     # 5. 棋盘上方 → 堆叠上方（闭合）
     config_pile_above = get_inverse_kinematics(pile_pos_above, np.eye(3))
@@ -166,10 +176,12 @@ def return_cube_to_pile(
     # 6. 下到堆叠位置（闭合）
     config_pile_down = get_inverse_kinematics(pile_pos, np.eye(3))
     config_pile_down["gripper"] = CLOSED_GRIPPER
-    move_to_pose_cubic(bus, config_pile_above, config_pile_down, move_duration / 2.0)
+    move_to_pose_cubic(bus, config_pile_above, config_pile_down, move_duration)
 
     # 7. 张开夹爪（放下）
-    move_gripper_only(bus, OPEN_GRIPPER, 0.4)
+    config_pile_down_open = config_pile_down
+    config_pile_down_open["gripper"] = OPEN_GRIPPER
+    move_to_pose_cubic(bus, config_pile_down, config_pile_down_open, move_duration )
 
     # 更新棋子位置和状态
     cube_manager.move_cube_to(cube, pile_pos)
@@ -178,8 +190,8 @@ def return_cube_to_pile(
     # 8. 抬回堆叠上方
     config_pile_above_open = get_inverse_kinematics(pile_pos_above, np.eye(3))
     config_pile_above_open["gripper"] = OPEN_GRIPPER
-    move_to_pose_cubic(bus, convert_to_dictionary(d.qpos),
-                      config_pile_above_open, move_duration / 2.0)
+    move_to_pose_cubic(bus, config_pile_down_open,
+                      config_pile_above_open, move_duration )
 
     hold_position(bus, 0.2)
 
@@ -188,7 +200,7 @@ def reset_all_cubes(bus, cube_manager):
     """
     游戏结束后：让机械臂把所有在棋盘上的棋子送回各自的堆
     """
-    print("开始复原所有棋子到初始堆叠位置...")
+    print("BEIGIN RESET")
     hold_position(bus, 0.2)
 
     pile_order = ["X_main", "X_side", "O_main", "O_side"]
@@ -217,10 +229,10 @@ def reset_all_cubes(bus, cube_manager):
             )
             return_cube_to_pile(bus, cube_manager, cube, target_pos)
 
-    print("所有棋子已复原到初始堆叠。")
+    print("RESET OK")
 
     # 回到初始姿态
-    current_dict = convert_to_dictionary(d.qpos)
+    current_dict = bus.sync_read("Present_Position")
     move_to_pose_cubic(bus, current_dict, INITIAL_ARM_CONFIG, 2.0)
     hold_position(bus, 0.5)
 
@@ -228,9 +240,8 @@ import time
 
 def robot_clap(bus):
 
-    current_pos = d.qpos.copy()
-    current_pos = convert_to_dictionary(current_pos)
-    move_duration = 2.0
+    current_pos = bus.sync_read("Present_Position")
+    move_duration = 1.0
 
     # ---- 姿态 #2: 抬手姿态（准备鼓掌）----
     raise_pose = {

@@ -4,13 +4,13 @@
 """
 
 # 机械臂参数
-OPEN_GRIPPER = 10
-CLOSED_GRIPPER = 0
+OPEN_GRIPPER = 25
+CLOSED_GRIPPER = 5
 
 # 方块高度相关参数
-BLOCK_HEIGHT = 0.02    # 相邻两块中心的高度差
-BOARD_Z = 0.014            # 棋盘上方块中心的高度
-PILE_BASE_Z = 0.014        # 堆叠最底层中心高度
+BLOCK_HEIGHT = 0.025    # 相邻两块中心的高度差
+BOARD_Z = 0.0    # 棋盘上方块中心的高度
+PILE_BASE_Z = 0.008       # 堆叠最底层中心高度
 
 # 棋盘 3x3 坐标
 BOARD_POSITIONS = {

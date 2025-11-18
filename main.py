@@ -28,7 +28,7 @@ def main():
     # 启动 viewer
     with mujoco.viewer.launch_passive(m, d) as viewer:
         print("MuJoCo Tic-Tac-Toe with SO-101 启动中...")
-        robot_clap(m,d,viewer)
+        # robot_clap(m,d,viewer)
         
         # 初始化棋子管理器
         cube_manager = CubeManager()
@@ -94,7 +94,7 @@ def main():
                     break
                 
                 # ========== 机器人回合 (X) ==========
-                robot_move = random.choice(list(location))
+                robot_move ="A3"
                 print("Robot move: ", robot_move)
                 robot_marks.append(robot_move)
                 location.remove(robot_move)

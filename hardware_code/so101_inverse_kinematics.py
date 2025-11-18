@@ -27,17 +27,17 @@ def get_inverse_kinematics(target_position, target_orientation=np.eye(3)):
     # 1d)
     theta2, theta3 = solve_theta2_theta3(position)
     # print(theta2,theta3)
-    joint_config['shoulder_lift']=theta2-3
+    joint_config['shoulder_lift']=theta2
     joint_config['elbow_flex']=theta3
 
     # 1e)
     orientation = get_gw1(theta1)@get_g12(theta2)@get_g23(theta3)@get_g34(0)
     theta4 = solve_theta4(orientation[0:3, 0:3])
-    joint_config['wrist_flex'] = theta4+2
+    joint_config['wrist_flex'] = theta4
     # print(theta4)
 
     # 1f)
-    joint_config['wrist_roll'] = -theta1+7
+    joint_config['wrist_roll'] = theta1-6
 
     return joint_config 
 
