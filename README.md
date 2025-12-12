@@ -10,77 +10,63 @@ Voice commands are issued as discrete grid coordinates (e.g., “one one”, “
 which are mapped to board positions and translated into precise robotic motion.
 
 
-## Role & Contribution
+## Technical Implementation (Robotics Focus)
 
-Role: Robotics & Motion Control Developer (Team of 3)
+- Implemented geometric inverse kinematics to convert 2D board coordinates into 6-DOF joint-space targets
 
-Primary Ownership (My Contribution):
+- Designed coordinate frame transformations between game board space and robot workspace
 
-Designed and implemented the entire robotic manipulation pipeline
+- Developed cubic joint-space trajectory generation for smooth, stable robotic motion
 
-Implemented inverse kinematics, coordinate mapping, trajectory planning, and motion execution
+- Implemented motion primitives for hovering, picking, and placement operations
 
-Focused on motion stability, precision, and smoothness during physical interaction
-
-Collaborative Components:
-
-Speech recognition (Vosk)
-
-High-level game logic and rule enforcement
-
-In short: I owned all robotics, kinematics, and motion control components, while collaborating on speech recognition and game logic.
-
-🔧 Technical Implementation (Robotics Focus)
-
-Implemented geometric inverse kinematics to convert 2D board coordinates into 6-DOF joint-space targets
-
-Designed coordinate frame transformations between game board space and robot workspace
-
-Developed cubic joint-space trajectory generation for smooth, stable robotic motion
-
-Implemented motion primitives for hovering, picking, and placement operations
-
-Reduced mechanical jitter by ~60% through trajectory smoothing and motion optimization
+- Reduced mechanical jitter by ~60% through trajectory smoothing and motion optimization
 
 ## System Capabilities
 
-Accurate mapping from spoken game commands → physical robot actions
+- Accurate mapping from **spoken coordinate commands → physical robot actions**
 
-Precise board-to-workspace coordinate transformation
+- Precise **grid-coordinate to robot workspace transformation**
 
-Smooth and repeatable robotic motion with minimal mechanical jitter
+- Smooth and repeatable robotic motion with minimal mechanical jitter
 
-Robust integration of speech input, logic control, and real-time motion execution
+- Robust integration of speech input, logic control, and real-time motion execution
 
 ## Tech Stack
 
-Robotics: SO-101 Robotic Arm
+- Robotics: SO-101 Robotic Arm
 
-Control & Planning: Inverse Kinematics, Cubic Trajectory Planning
+- Control & Planning: Inverse Kinematics, Cubic Trajectory Planning
 
-Programming: Python
+- Programming: Python
 
-Speech Recognition: Vosk
+- Speech Recognition: Vosk
 
-System Integration: Multi-module, real-time control pipeline
+- System Integration: Multi-module, real-time control pipeline
 
 ## Key Results
 
-Achieved reliable voice-controlled gameplay with physical robot execution
+- Achieved reliable voice-controlled gameplay with physical robot execution
 
-Reduced motion jitter by ~60% compared to naive point-to-point motion
+- Reduced motion jitter by ~60% compared to naive point-to-point motion
 
-Successfully integrated perception, logic, and control into a unified robotic system
+- Successfully integrated perception, logic, and control into a unified robotic system
+
+## Demo Video
+
+[![Voice Controlled Tic-Tac-Toe Robot Demo](https://img.youtube.com/vi/8oTWUvh-a8c/maxresdefault.jpg)](https://youtu.be/8oTWUvh-a8c)
+
+*Click the image above to watch the demo*
 
 ## Learning Outcomes
 
 This project strengthened my understanding of:
 
-Robotic kinematics and trajectory planning
+- Robotic kinematics and trajectory planning
 
-Coordinating multiple processing pipelines in real-time systems
+- Coordinating multiple processing pipelines in real-time systems
 
-Translating high-level commands into safe, smooth, low-level robotic motion
+- Translating high-level commands into safe, smooth, low-level robotic motion
 
 ## Repository Purpose
 
