@@ -54,7 +54,7 @@ which are mapped to board positions and translated into precise robotic motion.
 
 ## Demo Video
 
-[![Voice Controlled Tic-Tac-Toe Robot Demo](https://img.youtube.com/vi/8oTWUvh-a8c/maxresdefault.jpg)](https://youtu.be/8oTWUvh-a8c)
+[![Voice Controlled Tic-Tac-Toe Robot Demo](https://img.youtube.com/vi/8oTWUvh-a8c/hqdefault.jpg)](https://youtu.be/8oTWUvh-a8c)
 
 *Click the image above to watch the demo*
 
