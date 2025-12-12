@@ -6,7 +6,9 @@ The system integrates speech recognition, game logic, and a full robotic motion 
 ## Project Overview
 
 This project demonstrates a multi-modal robotic system combining natural language input with real-time robotic control.
-A human player issues spoken commands (e.g., “place at top left”), which are interpreted by the system and executed by a robotic arm that physically performs the move on a Tic-Tac-Toe board.
+Voice commands are issued as discrete grid coordinates (e.g., “one one”, “one two”, “two three”), 
+which are mapped to board positions and translated into precise robotic motion.
+
 
 ## Role & Contribution
 
